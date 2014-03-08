@@ -1,0 +1,23 @@
+{
+  "name": "terminal-console",
+  "version": "0.1.0",
+  "description": "Browser console logging to the terminal",
+  "private": true,
+  "main": "lib/client.js",
+  "scripts": {
+    "start": "node ./scripts/example.js"
+  },
+  "bin": {
+    "terminal-logger": "./bin/cmd.js"
+  },
+  "dependencies": {
+    "socket.io": "*",
+    "socket.io-client": "*",
+    "express": "*",
+    "ansi-color": "*",
+    "moment": "*",
+    "browserify": "*",
+    "yargs": "*"
+  },
+  "devDependencies": {}
+}
