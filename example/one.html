@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>terminal-console: example 1</title>
+  </head>
+  <body>
+    <script src="http://localhost:2845/logger.js?namespace=example1"></script>
+    <script>
+      var idx=0;
+      setInterval(function() {
+        console.log("foo:"+idx);
+        console.log("bar:"+idx);
+        idx++;
+      }, 2000);
+    </script>
+  </body>
+</html>
