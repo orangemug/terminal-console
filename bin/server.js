@@ -27,9 +27,10 @@ module.exports = function(port, done) {
     "white"
   ];
 
-  app.get('/logger.js', function(req, res) {
-    var namespace = req.query.namespace || "null";
-    var host      = req.query.host      || "http://"+req.headers.host;
+  // The client console.* overrides
+  app.get('/:namespace', function(req, res) {
+    var namespace = req.params.namespace || null;
+    var host      = "http://"+req.headers.host;
     
     var browserify = require('browserify');
     var b = browserify();
@@ -46,6 +47,7 @@ module.exports = function(port, done) {
     }).pipe(res);
   });
 
+  // WebSocket logging API
   io.sockets.on('connection', function (socket) {
     socket.on('started', function (namespace, datetime) {
       var ts = moment(datetime).format("YYYY-MM-DD HH:MM:SS:SSS");

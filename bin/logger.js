@@ -1,1 +1,1 @@
-require("../")(namespace, host);
+require("../")(host, namespace);
