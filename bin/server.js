@@ -27,6 +27,8 @@ module.exports = function(port, done) {
     "white"
   ];
 
+  var buffer = [];
+
   // The client console.* overrides
   app.get('/:namespace', function(req, res) {
     var namespace = req.params.namespace || null;
@@ -47,10 +49,47 @@ module.exports = function(port, done) {
     }).pipe(res);
   });
 
+  // Can still get out of order, so lets buffer the logging and sort by time
+  bufferWindow = 500;
+  lastRenderTime = Date.now();
+  setInterval(function() {
+    var newRenderTime = Date.now()-bufferWindow;
+    var newBuffer = [], out = [];
+    // Log buffer.
+    buffer.forEach(function(item) {
+      if(item.timestamp < newRenderTime) {
+        if(item.timestamp < lastRenderTime) {
+          item.brokeBuffer = true;
+        }
+        out.push(item);
+      } else {
+        newBuffer.push(item);
+      }
+    })
+    
+    out.sort(function(item) {
+      return -item.timestamp;
+    }).forEach(function(item) {
+      var color = groups[item.namespace];
+      var ts = moment(item.timestamp).format("YYYY-MM-DD HH:MM:SS:SSS");
+
+      if(item.brokeBuffer) {
+        item.detail.unshift(colorSet("[BROKE_BUFFER]", "white+red_bg"));
+      }
+      item.detail.unshift(colorSet(item.namespace, color));
+      item.detail.unshift("["+ts+"]");
+
+      console[item.method].apply(console, item.detail);
+    });
+
+    lastRenderTime = newRenderTime;
+    buffer = newBuffer;
+  }, 100);
+
   // WebSocket logging API
   io.sockets.on('connection', function (socket) {
-    socket.on('started', function (namespace, datetime) {
-      var ts = moment(datetime).format("YYYY-MM-DD HH:MM:SS:SSS");
+    socket.on('started', function (namespace, timestamp) {
+      var ts = moment(timestamp).format("YYYY-MM-DD HH:MM:SS:SSS");
 
       // Setup color if it doesn't exist
       var color = groups[namespace];
@@ -63,14 +102,13 @@ module.exports = function(port, done) {
       console.log("["+ts+"]", colorSet(namespace, color), "[started]");
     });
 
-    socket.on('log', function (namespace, datetime, method, detail) {
-      var color = groups[namespace];
-      var ts = moment(datetime).format("YYYY-MM-DD HH:MM:SS:SSS");
-
-      detail.unshift(colorSet(namespace, color));
-      detail.unshift("["+ts+"]");
-
-      console[method].apply(console, detail);
+    socket.on('log', function (namespace, timestamp, method, detail) {
+      buffer.push({
+        namespace: namespace,
+        timestamp: timestamp,
+        method: method,
+        detail: detail
+      });
     });
   });
 }
